@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
     model.AddSector(0.0804524,0.126599,7.43639e-06,-0.0694121,0.132974,6.11511e-06,4.62,1.46422,-0.0410333);
     model.AddSector(-0.0694121,0.132974,6.11511e-06,-0.149865,0.00637403,1.39815e-05,3.58378,1.18685,-0.207684);
     model.AddSector(-0.149865,0.00637403,1.39815e-05,-0.0804524,-0.126599,7.1294e-06,3.60604,1.10554,0.212817);
+    model.Evaluate();
 
     gridLayout = new QGridLayout;
     //vbox1 = new QVBoxLayout;
@@ -46,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // toopbar
     slider = new QSlider(Qt::Horizontal);
-    slider->setRange(0,200);
+    slider->setRange(0,Model::number_of_ponts);
     ui->toolBar->addWidget(slider);
 
 //    spin = new QSpinBox();
@@ -80,8 +81,12 @@ void MainWindow::showEvent( QShowEvent*)
 
 void MainWindow::UpdateGUI()
 {
+    // TABLE
+
+    // PLOTS
 
 
+    // VTK
     int nSectors = model.fan.size();
 
     points->SetNumberOfPoints(nSectors*3);
@@ -99,9 +104,6 @@ void MainWindow::UpdateGUI()
         pts2[2] = i*3+2;
         ugrid->InsertNextCell(VTK_TRIANGLE, 3, pts2);
     }
-
-    vtkIdType count=0;
-//    for(icy::Node* nd : *nodes) points->SetPoint(count++, nd->xn.data());
 
     points->Modified();
     ugrid->SetPoints(points);
