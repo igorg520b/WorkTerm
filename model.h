@@ -14,7 +14,7 @@ public:
                    double vx, double vy, double vz,
                    double sx, double sy, double txy);
 
-    class Sector
+    struct Sector
     {
         Eigen::Vector3d u, v; // edges
         Eigen::Matrix3d stress;
@@ -26,8 +26,9 @@ public:
 
     std::vector<Sector> fan;
 
-    class Result
+    struct Result
     {
+
         Eigen::Vector3d traction[2];
         double angle_fwd, angle_bwd;
         double phi;
@@ -47,6 +48,8 @@ public:
     Eigen::Vector3d normal, dir;
     unsigned evaluation_time;
     double span_angle;
+    unsigned fwd_sector, bwd_sector;
+    unsigned idx_max_sector;
 
 };
 

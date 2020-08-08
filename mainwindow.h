@@ -20,7 +20,14 @@
 #include <vtkCamera.h>
 #include <vtkProp3DCollection.h>
 #include <vtkNamedColors.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkDoubleArray.h>
+#include <vtkIntArray.h>
+#include <vtkGlyph3D.h>
+#include <vtkArrowSource.h>
+#include <vtkProperty.h>
 
+#include "model.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -34,12 +41,17 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    void showEvent( QShowEvent* event ) override;
+    void UpdateGUI();
+
+    Model model;
+
+
     QGridLayout *gridLayout;
-    QVBoxLayout *vbox1;
 
     // toolbar
     QSlider *slider;                // in toolbar
-    QSpinBox *spin;                 // in toolbar
+//    QSpinBox *spin;                 // in toolbar
 
 
     // plots
@@ -56,7 +68,18 @@ public:
     vtkNew<vtkRenderer> renderer;
     vtkNew<vtkNamedColors> colors;
 
+    vtkNew<vtkPoints> points;
 
+    vtkNew<vtkUnstructuredGrid> ugrid;
+    vtkNew<vtkDataSetMapper> dataSetMapper;
+    vtkNew<vtkActor> actor_mesh;
+
+    // arrows
+    vtkNew<vtkDoubleArray> arrowCoords;
+    vtkNew<vtkArrowSource> arrowSource;
+    vtkNew<vtkGlyph3D> glyph3D;
+    vtkNew<vtkPolyDataMapper> mapper_arrows;
+    vtkNew<vtkActor> actor_arrows;
 
     // info
     QTableView *table;
