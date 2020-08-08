@@ -45,6 +45,7 @@ public:
     void UpdateGUI();
 
     Model model;
+    Model *selectedModel;
 
 
     QGridLayout *gridLayout;
@@ -57,7 +58,7 @@ public:
     // plots
     QChartView *chartViewGraphs, *chartViewCircles;
 
-    QLineSeries *series_tagnential, *series_normal, *series_selected;
+    QLineSeries *series_tangential, *series_normal, *series_selected;
     QLineSeries *series_mohr, *series_mohr_selected;
 
     QChart *chart_line, *chart_line_mohr;

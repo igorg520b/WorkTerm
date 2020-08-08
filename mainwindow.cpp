@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
     model.AddSector(-0.0694121,0.132974,6.11511e-06,-0.149865,0.00637403,1.39815e-05,3.58378,1.18685,-0.207684);
     model.AddSector(-0.149865,0.00637403,1.39815e-05,-0.0804524,-0.126599,7.1294e-06,3.60604,1.10554,0.212817);
     model.Evaluate();
+    selectedModel = &model;
 
     gridLayout = new QGridLayout;
     //vbox1 = new QVBoxLayout;
@@ -23,17 +24,32 @@ MainWindow::MainWindow(QWidget *parent)
     chartViewGraphs = new QChartView;
     chartViewCircles = new QChartView;
 
-    series_tagnential = new QLineSeries;
+    series_tangential = new QLineSeries;
+    series_tangential->setName("tangential");
+
     series_normal = new QLineSeries;
+    series_normal->setName("normal");
+
     series_selected = new QLineSeries;
+
     series_mohr = new QLineSeries;
+    series_mohr->setName("normal vs tangential traction");
+
     series_mohr_selected = new QLineSeries;
 
     chart_line = new QChart;
+    chart_line->addSeries(series_tangential);
+    chart_line->addSeries(series_normal);
+
     chart_line_mohr = new QChart;
+    chart_line_mohr->addSeries(series_mohr);
 
     chartViewGraphs->setChart(chart_line);
     chartViewCircles->setChart(chart_line_mohr);
+
+    chart_line_mohr->createDefaultAxes();
+    chart_line->createDefaultAxes();
+
 
     // vtk
     qt_vtk_widget = new QVTKOpenGLNativeWidget();
@@ -84,17 +100,68 @@ void MainWindow::UpdateGUI()
     // TABLE
 
     // PLOTS
+    double ymin = DBL_MAX, ymax = -DBL_MAX;
+    double xmin = DBL_MAX, xmax = -DBL_MAX;
+    series_mohr->clear();
+    series_normal->clear();
+    series_tangential->clear();
 
+
+    for(int i=0;i<Model::number_of_ponts;i++)
+    {
+        Model::Result &res = selectedModel->results[i];
+        double val_x = res.trac_normal;
+        double val_y = res.trac_tangential;
+
+        xmin = std::min(xmin, val_x);
+        xmax = std::max(xmax, val_x);
+        ymin = std::min(ymin, val_y);
+        ymax = std::max(ymax, val_y);
+        series_mohr->append(val_x,val_y);
+    }
+    double span_y = ymax-ymin;
+    double span_x = xmax-xmin;
+    double span = std::max(span_y, span_x)*0.65;
+    double avgx = (xmax+xmin)/2;
+
+    QList<QAbstractAxis*> axes = chart_line_mohr->axes();
+    axes[0]->setRange(avgx-span, avgx+span);
+    axes[1]->setRange(-span, span);
+
+
+    xmin = ymin = DBL_MAX;
+    xmax = ymax = -DBL_MAX;
+    for(int i=0;i<Model::number_of_ponts;i++)
+    {
+        Model::Result &res = selectedModel->results[i];
+        double val_x = res.angle_fwd;
+        xmin = std::min(xmin, val_x);
+        xmax = std::max(xmax, val_x);
+        ymin = std::min(ymin, res.trac_tangential);
+        ymax = std::max(ymax, res.trac_tangential);
+        ymin = std::min(ymin, res.trac_normal);
+        ymax = std::max(ymax, res.trac_normal);
+        series_normal->append(val_x,res.trac_normal);
+        series_tangential->append(val_x,res.trac_tangential);
+    }
+    span_y = ymax-ymin;
+    span_x = xmax-xmin;
+    span = std::max(span_y, span_x)*0.65;
+    avgx = (xmax+xmin)/2;
+
+    axes = chart_line->axes();
+    axes[0]->setRange(0, selectedModel->max_angle);
+    axes[1]->setRange(ymin-span_y*0.1, ymax+span_y*0.1);
 
     // VTK
-    int nSectors = model.fan.size();
+    int nSectors = selectedModel->fan.size();
 
     points->SetNumberOfPoints(nSectors*3);
     vtkIdType pts2[3];
     ugrid->Reset();
     for(int i=0;i<nSectors;i++)
     {
-        Model::Sector &s = model.fan[i];
+        Model::Sector &s = selectedModel->fan[i];
         points->SetPoint(i*3+0, 0, 0, 0);
         points->SetPoint(i*3+1, s.u.x(), s.u.y(), s.u.z());
         points->SetPoint(i*3+2, s.v.x(), s.v.y(), s.v.z());

@@ -56,6 +56,7 @@ void Model::Evaluate()
 
     // evaluate the function for different angles and record the maximum
     max_normal_traction = -DBL_MAX;
+    max_angle = end_angle;
 
     dir = Eigen::Vector3d::Zero();
 

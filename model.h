@@ -45,7 +45,7 @@ public:
 
     Eigen::Vector3d normal, dir;
     unsigned evaluation_time;
-    double span_angle;
+    double max_angle;
     unsigned fwd_sector, bwd_sector;
     unsigned idx_max_sector;
     double max_normal_traction;
