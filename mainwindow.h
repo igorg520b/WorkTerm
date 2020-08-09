@@ -36,6 +36,8 @@
 #include <vtkProperty2D.h>
 #include <vtkPointData.h>
 
+#include <vector>
+
 #include "model.h"
 
 QT_BEGIN_NAMESPACE
@@ -53,7 +55,7 @@ public:
     void showEvent( QShowEvent* event ) override;
     void UpdateGUI();
 
-    Model model;
+    std::vector<Model*> models;
     Model *selectedModel;
 
 
@@ -61,7 +63,7 @@ public:
 
     // toolbar
     QSlider *slider;                // in toolbar
-//    QSpinBox *spin;                 // in toolbar
+    QSpinBox *spin;                 // in toolbar
 
 
     // plots
@@ -109,6 +111,7 @@ public:
 
 private slots:
     void sliderValueChanged(int val);
+    void spinValueChanged(int val);
 
 
 private:
