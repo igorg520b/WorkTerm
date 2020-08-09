@@ -7,6 +7,8 @@
 #include <QSlider>
 #include <QSpinBox>
 #include <QTableView>
+#include <QScatterSeries>
+#include <QTableWidget>
 
 #include <QtCharts>
 #include <QVTKOpenGLNativeWidget.h>
@@ -26,6 +28,13 @@
 #include <vtkGlyph3D.h>
 #include <vtkArrowSource.h>
 #include <vtkProperty.h>
+#include <vtkUnstructuredGridGeometryFilter.h>
+#include <vtkLabeledDataMapper.h>
+#include <vtkIdFilter.h>
+#include <vtkCellCenters.h>
+#include <vtkActor2D.h>
+#include <vtkProperty2D.h>
+#include <vtkPointData.h>
 
 #include "model.h"
 
@@ -58,8 +67,8 @@ public:
     // plots
     QChartView *chartViewGraphs, *chartViewCircles;
 
-    QLineSeries *series_tangential, *series_normal, *series_selected;
-    QLineSeries *series_mohr, *series_mohr_selected;
+    QLineSeries *series_tangential, *series_normal, *series_mohr;
+    QScatterSeries *series_selected, *series_mohr_selected;
 
     QChart *chart_line, *chart_line_mohr;
 
@@ -76,21 +85,35 @@ public:
     vtkNew<vtkActor> actor_mesh;
 
     // arrows
+    vtkNew<vtkPoints> points_origin;
+    vtkNew<vtkUnstructuredGrid> ugrid_arrow_origin;
     vtkNew<vtkDoubleArray> arrowCoords;
     vtkNew<vtkArrowSource> arrowSource;
     vtkNew<vtkGlyph3D> glyph3D;
     vtkNew<vtkPolyDataMapper> mapper_arrows;
     vtkNew<vtkActor> actor_arrows;
 
+    // sector numbers
+    vtkNew<vtkUnstructuredGridGeometryFilter> geometryFilter;
+    vtkNew<vtkLabeledDataMapper> labledDataMapper;
+    vtkNew<vtkActor2D> actor_labels;
+    vtkNew<vtkIdFilter> idfilter;
+    vtkNew<vtkCellCenters> cellCenters;
+
     // info
-    QTableView *table;
+    QTableWidget *table;
+    QTableWidgetItem *twi_selectedIdx, *twi_angle, *twi_normal_traction, *twi_tangential_traction;
 //    QLabel *lblNormalTraction, *lblTangentialTraction;
 //    QLabel *lblFwdAngle, *lblBwdAngle, *lblSampleNumber;
 //    QLabel *lblComputeTime, *lblEvaluations;
 
+private slots:
+    void sliderValueChanged(int val);
 
 
 private:
     Ui::MainWindow *ui;
+
+
 };
 #endif // MAINWINDOW_H

@@ -30,19 +30,21 @@ MainWindow::MainWindow(QWidget *parent)
     series_normal = new QLineSeries;
     series_normal->setName("normal");
 
-    series_selected = new QLineSeries;
+    series_selected = new QScatterSeries;
 
     series_mohr = new QLineSeries;
     series_mohr->setName("normal vs tangential traction");
 
-    series_mohr_selected = new QLineSeries;
+    series_mohr_selected = new QScatterSeries;
 
     chart_line = new QChart;
     chart_line->addSeries(series_tangential);
     chart_line->addSeries(series_normal);
+    chart_line->addSeries(series_selected);
 
     chart_line_mohr = new QChart;
     chart_line_mohr->addSeries(series_mohr);
+    chart_line_mohr->addSeries(series_mohr_selected);
 
     chartViewGraphs->setChart(chart_line);
     chartViewCircles->setChart(chart_line_mohr);
@@ -56,14 +58,41 @@ MainWindow::MainWindow(QWidget *parent)
     qt_vtk_widget->setRenderWindow(renderWindow);
     renderer->SetBackground(colors->GetColor3d("White").GetData());
     renderer->AddActor(actor_mesh);
+    renderer->AddActor(actor_arrows);
+    renderer->AddActor(actor_labels);
     renderWindow->AddRenderer(renderer);
 
+    points_origin->InsertPoint(0, 0,0,0);
+
     // summary
-    table = new QTableView;
+    table = new QTableWidget;
+    table->setRowCount(4);
+    table->setColumnCount(2);
+
+    QTableWidgetItem *row0 = new QTableWidgetItem("index");
+    QTableWidgetItem *row1 = new QTableWidgetItem("angle");
+    QTableWidgetItem *row2 = new QTableWidgetItem("normal traction");
+    QTableWidgetItem *row3 = new QTableWidgetItem("tangential traction");
+
+    twi_selectedIdx = new QTableWidgetItem;
+
+    twi_angle = new QTableWidgetItem;
+    twi_normal_traction = new QTableWidgetItem;
+    twi_tangential_traction = new QTableWidgetItem;
+
+    table->setItem(0,1, twi_selectedIdx);
+    table->setItem(1,1, twi_angle);
+    table->setItem(2,1, twi_normal_traction);
+    table->setItem(3,1, twi_tangential_traction);
+    table->setItem(0,0, row0);
+    table->setItem(1,0, row1);
+    table->setItem(2,0, row2);
+    table->setItem(3,0, row3);
+
 
     // toopbar
     slider = new QSlider(Qt::Horizontal);
-    slider->setRange(0,Model::number_of_ponts);
+    slider->setRange(0,Model::number_of_ponts-1);
     ui->toolBar->addWidget(slider);
 
 //    spin = new QSpinBox();
@@ -80,6 +109,7 @@ MainWindow::MainWindow(QWidget *parent)
     gridLayout->addWidget(qt_vtk_widget, 1, 0);
     gridLayout->addWidget(table, 1, 1);
 
+    connect(slider, SIGNAL(valueChanged(int)), this, SLOT(sliderValueChanged(int)));
 
 }
 
@@ -92,12 +122,27 @@ void MainWindow::showEvent( QShowEvent*)
 {
     // for testing
     UpdateGUI();
-    renderWindow->Render();
 }
+
+void MainWindow::sliderValueChanged(int)
+{
+    UpdateGUI();
+}
+
+
 
 void MainWindow::UpdateGUI()
 {
     // TABLE
+    int selected_idx = slider->value();
+    Model::Result &res = selectedModel->results[selected_idx];
+
+    QString strIdx = QString::number(selected_idx);
+    twi_selectedIdx->setText(strIdx);
+
+    twi_angle->setText(QString::number(res.angle_fwd*180/M_PI));
+    twi_normal_traction->setText(QString::number(res.trac_normal));
+    twi_tangential_traction->setText(QString::number(res.trac_tangential));
 
     // PLOTS
     double ymin = DBL_MAX, ymax = -DBL_MAX;
@@ -107,7 +152,7 @@ void MainWindow::UpdateGUI()
     series_tangential->clear();
 
 
-    for(int i=0;i<Model::number_of_ponts;i++)
+    for(unsigned i=0;i<Model::number_of_ponts;i++)
     {
         Model::Result &res = selectedModel->results[i];
         double val_x = res.trac_normal;
@@ -131,7 +176,7 @@ void MainWindow::UpdateGUI()
 
     xmin = ymin = DBL_MAX;
     xmax = ymax = -DBL_MAX;
-    for(int i=0;i<Model::number_of_ponts;i++)
+    for(unsigned i=0;i<Model::number_of_ponts;i++)
     {
         Model::Result &res = selectedModel->results[i];
         double val_x = res.angle_fwd;
@@ -152,6 +197,13 @@ void MainWindow::UpdateGUI()
     axes = chart_line->axes();
     axes[0]->setRange(0, selectedModel->max_angle);
     axes[1]->setRange(ymin-span_y*0.1, ymax+span_y*0.1);
+
+
+    // plots - selections
+    series_selected->clear();
+    series_mohr_selected->clear();
+    series_selected->append(res.angle_fwd, res.trac_normal);
+    series_mohr_selected->append(res.trac_normal, res.trac_tangential);
 
     // VTK
     int nSectors = selectedModel->fan.size();
@@ -180,6 +232,56 @@ void MainWindow::UpdateGUI()
     actor_mesh->GetProperty()->SetColor(colors->GetColor3d("Seashell").GetData());
     actor_mesh->GetProperty()->SetLineWidth(0.5);
     actor_mesh->GetProperty()->EdgeVisibilityOn();
+
+
+
+    // sector numbers
+    geometryFilter->SetInputData(ugrid);
+    geometryFilter->Update();
+
+    idfilter->SetInputConnection(geometryFilter->GetOutputPort());
+    idfilter->PointIdsOff();
+    idfilter->CellIdsOn();
+    idfilter->FieldDataOff();
+
+    cellCenters->SetInputConnection(idfilter->GetOutputPort());
+
+    labledDataMapper->SetInputConnection(cellCenters->GetOutputPort());
+    labledDataMapper->SetLabelModeToLabelScalars();
+
+    actor_labels->SetMapper(labledDataMapper);
+    actor_labels->GetProperty()->SetColor(colors->GetColor3d("Black").GetData());
+
+    // arrow
+    ugrid_arrow_origin->Reset();
+    pts2[0] = 0;
+    ugrid_arrow_origin->InsertNextCell(VTK_VERTEX, 1, pts2);
+    ugrid_arrow_origin->SetPoints(points_origin);
+
+    arrowCoords->Reset();
+    arrowCoords->SetNumberOfComponents(3);
+    arrowCoords->SetName("arrowCoords");
+    arrowCoords->SetNumberOfTuples(1);
+    arrowCoords->SetTuple(0, res.tn.data());
+    arrowCoords->Modified();
+
+    ugrid_arrow_origin->GetPointData()->AddArray(arrowCoords);
+    ugrid_arrow_origin->GetPointData()->SetActiveVectors("arrowCoords");
+
+    arrowSource->SetShaftRadius(0.02);
+    arrowSource->SetTipRadius(0.03);
+    arrowSource->SetTipLength(0.06);
+    glyph3D->SetSourceConnection(arrowSource->GetOutputPort());
+    glyph3D->SetVectorModeToUseVector();
+    glyph3D->SetInputData(ugrid_arrow_origin);
+    glyph3D->OrientOn();
+    glyph3D->ScalingOn();
+//    glyph3D->ScalingOff();
+//    glyph3D->SetColorModeToColorByVector();
+//    glyph3D->SetScaleModeToScaleByVector();
+    glyph3D->SetScaleFactor(0.1);
+    mapper_arrows->SetInputConnection(glyph3D->GetOutputPort());
+    actor_arrows->SetMapper(mapper_arrows);
 
     renderWindow->Render();
 
