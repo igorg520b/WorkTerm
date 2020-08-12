@@ -46,5 +46,5 @@ add_executable(wt
 )
 target_link_libraries(wt PRIVATE Qt5::Widgets Qt5::Charts Qt5::Core)
 target_link_libraries(wt PRIVATE ${VTK_LIBRARIES})
-target_include_directories(wt PUBLIC /home/s2/Projects-libraries/vtk/Common/Core/)
-target_include_directories(wt PUBLIC /home/s2/Projects-libraries/eigen)
+#target_include_directories(wt PUBLIC /home/s2/Projects-libraries/vtk/Common/Core/)
+target_include_directories(wt PUBLIC "C:/Users/s/Projects/eigen-3.3.7")

@@ -11,6 +11,7 @@
 #include <QTableWidget>
 
 #include <QtCharts>
+/*
 #include <QVTKOpenGLNativeWidget.h>
 
 #include <vtkGenericOpenGLRenderWindow.h>
@@ -35,6 +36,7 @@
 #include <vtkActor2D.h>
 #include <vtkProperty2D.h>
 #include <vtkPointData.h>
+*/
 
 #include <vector>
 
@@ -73,7 +75,7 @@ public:
     QScatterSeries *series_selected, *series_mohr_selected;
 
     QChart *chart_line, *chart_line_mohr;
-
+/*
     // vtk
     QVTKOpenGLNativeWidget *qt_vtk_widget;
     vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
@@ -101,7 +103,7 @@ public:
     vtkNew<vtkActor2D> actor_labels;
     vtkNew<vtkIdFilter> idfilter;
     vtkNew<vtkCellCenters> cellCenters;
-
+*/
     // info
     QTableWidget *table;
     QTableWidgetItem *twi_selectedIdx, *twi_angle, *twi_normal_traction, *twi_tangential_traction;

@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+#include <cfloat>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -93,15 +94,15 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     // vtk
-    qt_vtk_widget = new QVTKOpenGLNativeWidget();
-    qt_vtk_widget->setRenderWindow(renderWindow);
-    renderer->SetBackground(colors->GetColor3d("White").GetData());
-    renderer->AddActor(actor_mesh);
-    renderer->AddActor(actor_arrows);
-    renderer->AddActor(actor_labels);
-    renderWindow->AddRenderer(renderer);
+//    qt_vtk_widget = new QVTKOpenGLNativeWidget();
+//    qt_vtk_widget->setRenderWindow(renderWindow);
+//    renderer->SetBackground(colors->GetColor3d("White").GetData());
+//    renderer->AddActor(actor_mesh);
+//    renderer->AddActor(actor_arrows);
+ //   renderer->AddActor(actor_labels);
+//    renderWindow->AddRenderer(renderer);
 
-    points_origin->InsertPoint(0, 0,0,0);
+    //points_origin->InsertPoint(0, 0,0,0);
 
     // summary
     table = new QTableWidget;
@@ -142,10 +143,9 @@ MainWindow::MainWindow(QWidget *parent)
     w->setLayout(gridLayout);
     setCentralWidget(w);
 
-//    gridLayout->addItem(chartViewGraphs)
     gridLayout->addWidget(chartViewGraphs, 0, 0);
     gridLayout->addWidget(chartViewCircles, 0, 1);
-    gridLayout->addWidget(qt_vtk_widget, 1, 0);
+//    gridLayout->addWidget(qt_vtk_widget, 1, 0);
     gridLayout->addWidget(table, 1, 1);
 
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(sliderValueChanged(int)));
@@ -244,7 +244,7 @@ void MainWindow::UpdateGUI()
     series_mohr_selected->clear();
     series_selected->append(res.angle_fwd, res.trac_normal);
     series_mohr_selected->append(res.trac_normal, res.trac_tangential);
-
+/*
     // VTK
     int nSectors = selectedModel->fan.size();
 
@@ -272,8 +272,6 @@ void MainWindow::UpdateGUI()
     actor_mesh->GetProperty()->SetColor(colors->GetColor3d("Seashell").GetData());
     actor_mesh->GetProperty()->SetLineWidth(0.5);
     actor_mesh->GetProperty()->EdgeVisibilityOn();
-
-
 
     // sector numbers
     geometryFilter->SetInputData(ugrid);
@@ -325,7 +323,7 @@ void MainWindow::UpdateGUI()
 
     renderWindow->Render();
 
-
+*/
 
 }
 void MainWindow::spinValueChanged(int val)
