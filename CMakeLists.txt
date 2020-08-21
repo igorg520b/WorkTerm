@@ -10,7 +10,7 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+#[[
 find_package(VTK COMPONENTS
   vtkCommonColor
   vtkCommonCore
@@ -32,7 +32,7 @@ if (NOT VTK_FOUND)
   message("${VTK_NOT_FOUND_MESSAGE}")
   return ()
 endif()
-
+]]#
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt5Charts)
 
@@ -45,6 +45,7 @@ add_executable(wt
   model.h
 )
 target_link_libraries(wt PRIVATE Qt5::Widgets Qt5::Charts Qt5::Core)
-target_link_libraries(wt PRIVATE ${VTK_LIBRARIES})
+#target_link_libraries(wt PRIVATE ${VTK_LIBRARIES})
 #target_include_directories(wt PUBLIC /home/s2/Projects-libraries/vtk/Common/Core/)
-target_include_directories(wt PUBLIC "C:/Users/s/Projects/eigen-3.3.7")
+#target_include_directories(wt PUBLIC "C:/Users/s/Projects/eigen-3.3.7")
+target_include_directories(wt PUBLIC "/home/s2/Projects-libraries/eigen")
