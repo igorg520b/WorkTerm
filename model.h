@@ -18,32 +18,34 @@ public:
 
     struct Sector
     {
-        Eigen::Vector3d u, v; // edges
-        Eigen::Matrix3d stress;
-        Eigen::Vector3d frame_x, frame_y;
-        Eigen::Vector3d t0, t1;
+        Eigen::Vector2d u, v; // edges
+        Eigen::Vector2d u_normalized, v_normalized; // edges
+        Eigen::Vector2d u_p, v_p; // edges
+        Eigen::Matrix2d stress;
+        Eigen::Vector2d t0, t1;
         double angle0, angle1;
+        double angle_span;
     };
 
     std::vector<Sector> fan;
 
     struct Result
     {
-        Eigen::Vector3d traction[2];    // traction of the "left" and "right" side of the fracture plane
+        Eigen::Vector2d traction[2];    // traction of the "left" and "right" side of the fracture plane
         double angle_fwd, angle_bwd;
         double phi[2];
         double theta[2];
         double t0_normal, t0_tangential;
         double t1_normal, t1_tangential;
         double trac_normal, trac_tangential;
-        Eigen::Vector3d tn, tn_perp;
+        Eigen::Vector2d tn, tn_perp;
     };
 
     static const unsigned number_of_ponts = 200;
     Result results[number_of_ponts];
 
 
-    Eigen::Vector3d normal, dir;
+    Eigen::Vector2d dir;
     unsigned evaluation_time;
     double max_angle;
     unsigned fwd_sector, bwd_sector;

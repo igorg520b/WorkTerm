@@ -11,9 +11,9 @@
 #include <QTableWidget>
 
 #include <QtCharts>
+
 /*
 #include <QVTKOpenGLNativeWidget.h>
-
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkNew.h>
 #include <vtkPolyDataMapper.h>
@@ -107,9 +107,6 @@ public:
     // info
     QTableWidget *table;
     QTableWidgetItem *twi_selectedIdx, *twi_angle, *twi_normal_traction, *twi_tangential_traction;
-//    QLabel *lblNormalTraction, *lblTangentialTraction;
-//    QLabel *lblFwdAngle, *lblBwdAngle, *lblSampleNumber;
-//    QLabel *lblComputeTime, *lblEvaluations;
 
 private slots:
     void sliderValueChanged(int val);

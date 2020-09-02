@@ -93,16 +93,8 @@ MainWindow::MainWindow(QWidget *parent)
     chart_line->createDefaultAxes();
 
 
-    // vtk
-//    qt_vtk_widget = new QVTKOpenGLNativeWidget();
-//    qt_vtk_widget->setRenderWindow(renderWindow);
-//    renderer->SetBackground(colors->GetColor3d("White").GetData());
-//    renderer->AddActor(actor_mesh);
-//    renderer->AddActor(actor_arrows);
- //   renderer->AddActor(actor_labels);
-//    renderWindow->AddRenderer(renderer);
 
-    //points_origin->InsertPoint(0, 0,0,0);
+
 
     // summary
     table = new QTableWidget;
@@ -142,10 +134,20 @@ MainWindow::MainWindow(QWidget *parent)
     QWidget *w = new QWidget();
     w->setLayout(gridLayout);
     setCentralWidget(w);
-
+/*
+    // vtk
+    points_origin->InsertPoint(0, 0,0,0);
+    qt_vtk_widget = new QVTKOpenGLNativeWidget();
+    qt_vtk_widget->setRenderWindow(renderWindow);
+    renderer->SetBackground(colors->GetColor3d("White").GetData());
+    renderer->AddActor(actor_mesh);
+    renderer->AddActor(actor_arrows);
+    renderer->AddActor(actor_labels);
+    renderWindow->AddRenderer(renderer);
+    gridLayout->addWidget(qt_vtk_widget, 1, 0);
+*/
     gridLayout->addWidget(chartViewGraphs, 0, 0);
     gridLayout->addWidget(chartViewCircles, 0, 1);
-//    gridLayout->addWidget(qt_vtk_widget, 1, 0);
     gridLayout->addWidget(table, 1, 1);
 
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(sliderValueChanged(int)));
@@ -244,10 +246,10 @@ void MainWindow::UpdateGUI()
     series_mohr_selected->clear();
     series_selected->append(res.angle_fwd, res.trac_normal);
     series_mohr_selected->append(res.trac_normal, res.trac_tangential);
-/*
+
     // VTK
     int nSectors = selectedModel->fan.size();
-
+/*
     points->SetNumberOfPoints(nSectors*3);
     vtkIdType pts2[3];
     ugrid->Reset();
@@ -255,8 +257,8 @@ void MainWindow::UpdateGUI()
     {
         Model::Sector &s = selectedModel->fan[i];
         points->SetPoint(i*3+0, 0, 0, 0);
-        points->SetPoint(i*3+1, s.u.x(), s.u.y(), s.u.z());
-        points->SetPoint(i*3+2, s.v.x(), s.v.y(), s.v.z());
+        points->SetPoint(i*3+1, s.u.x(), s.u.y(), 0);
+        points->SetPoint(i*3+2, s.v.x(), s.v.y(), 0);
 
         pts2[0] = i*3+0;
         pts2[1] = i*3+1;
@@ -300,7 +302,11 @@ void MainWindow::UpdateGUI()
     arrowCoords->SetNumberOfComponents(3);
     arrowCoords->SetName("arrowCoords");
     arrowCoords->SetNumberOfTuples(1);
-    arrowCoords->SetTuple(0, res.tn.data());
+
+    double d[3]={};
+    d[0] = res.tn.x();
+    d[1] = res.tn.y();
+    arrowCoords->SetTuple(0, d);
     arrowCoords->Modified();
 
     ugrid_arrow_origin->GetPointData()->AddArray(arrowCoords);
@@ -322,8 +328,8 @@ void MainWindow::UpdateGUI()
     actor_arrows->SetMapper(mapper_arrows);
 
     renderWindow->Render();
-
 */
+
 
 }
 void MainWindow::spinValueChanged(int val)
