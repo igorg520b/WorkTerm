@@ -20,7 +20,7 @@ public:
     void InitializeFan();
     void EvaluateViaBrent();
 
-    void evaluate_tractions(const double angle_fwd, double &t_normal, double &t_tangential) const;
+    void evaluate_tractions(double angle_fwd, double &t_normal, double &t_tangential) const;
     double normal_traction(const double angle_fwd) const;
     double tangential_traction(const double angle_fwd) const;
 

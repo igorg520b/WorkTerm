@@ -48,13 +48,15 @@ void Model::InitializeFan()
         s.t0 = s.stress * s.u_p;
         s.t1 = s.stress * s.v_p;
     }
-    max_angle = isBoundary ? end_angle : M_PI;
-    max_angle -= 1e-10;
+//    max_angle = isBoundary ? end_angle : M_PI;
+    max_angle = end_angle;
+//    max_angle -= 1e-10;
 }
 
-void Model::evaluate_tractions(const double angle_fwd, double &trac_normal, double &trac_tangential) const
+void Model::evaluate_tractions(double angle_fwd, double &trac_normal, double &trac_tangential) const
 {
-    if(angle_fwd > max_angle) throw std::range_error("angle is out of range");
+    if(angle_fwd > max_angle || angle_fwd < 0) throw std::range_error("angle is out of range");
+    if(angle_fwd == max_angle) angle_fwd -= 1e-10;
     Eigen::Vector2d traction[2];
     traction[0] = traction[1] = Eigen::Vector2d::Zero();
     Eigen::Vector2d tn, tn_p;
@@ -130,32 +132,10 @@ void Model::EvaluateViaBrent()
     boost::uintmax_t max_iter = 100;
     auto r = boost::math::tools::brent_find_minima(
                 [this](double x){return -this->normal_traction(x);},
-    0.0, max_angle, bits, max_iter);
+    0.0, isBoundary ? max_angle : M_PI, bits, max_iter);
 
     max_normal_trac = -r.second; // sign inverted since we need the maximum
     fracture_angle = r.first;
     iterations = max_iter;
-/*
-    // min normal
-    max_iter = 100;
-    r = boost::math::tools::brent_find_minima(
-                [this](double x){return this->normal_traction(x);},
-    0.0, max_angle, bits, max_iter);
-    min_normal_trac = r.second;
-
-    // max tangential
-    max_iter = 100;
-    r = boost::math::tools::brent_find_minima(
-                [this](double x){return -this->tangential_traction(x);},
-    0.0, max_angle, bits, max_iter);
-    max_tangential_trac = -r.second;
-
-    // min tangential
-    max_iter = 100;
-    r = boost::math::tools::brent_find_minima(
-                [this](double x){return this->tangential_traction(x);},
-    0.0, max_angle, bits, max_iter);
-    min_tangential_trac = r.second;
-    */
 }
 

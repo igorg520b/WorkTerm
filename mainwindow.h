@@ -73,6 +73,8 @@ public:
 
     QLineSeries *series_tangential, *series_normal, *series_mohr;
     QScatterSeries *series_selected, *series_mohr_selected;
+    QScatterSeries *sector_limits, *sector_limits_mohr;
+    QScatterSeries *max_graph, *max_mohr;
 
     QChart *chart_line, *chart_line_mohr;
 /*

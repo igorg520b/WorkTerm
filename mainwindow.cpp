@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-
 #include <iostream>
 #include <cmath>
 #include <Eigen/Geometry>
@@ -87,6 +86,20 @@ MainWindow::MainWindow(QWidget *parent)
 
     series_selected = new QScatterSeries;
 
+    sector_limits = new QScatterSeries;
+    sector_limits->setName("sector boundaries");
+    sector_limits_mohr = new QScatterSeries;
+    sector_limits_mohr->setName("sector boundaries");
+
+    max_graph = new QScatterSeries;
+    max_graph->setName("max traction");
+    max_mohr = new QScatterSeries;
+    max_mohr->setName("max traction");
+    sector_limits->setMarkerSize(10);
+    sector_limits_mohr->setMarkerSize(10);
+    max_graph->setMarkerSize(20);
+    max_mohr->setMarkerSize(20);
+
     series_mohr = new QLineSeries;
     series_mohr->setName("normal vs tangential traction");
 
@@ -95,11 +108,15 @@ MainWindow::MainWindow(QWidget *parent)
     chart_line = new QChart;
     chart_line->addSeries(series_tangential);
     chart_line->addSeries(series_normal);
+    chart_line->addSeries(max_graph);
     chart_line->addSeries(series_selected);
+    chart_line->addSeries(sector_limits);
 
     chart_line_mohr = new QChart;
     chart_line_mohr->addSeries(series_mohr);
+    chart_line_mohr->addSeries(max_mohr);
     chart_line_mohr->addSeries(series_mohr_selected);
+    chart_line_mohr->addSeries(sector_limits_mohr);
 
     chartViewGraphs->setChart(chart_line);
     chartViewCircles->setChart(chart_line_mohr);
@@ -250,9 +267,28 @@ void MainWindow::UpdateGUI()
     series_selected->append(angle, normal_trac);
     series_mohr_selected->append(normal_trac, tangential_trac);
 
-    // append max point
-    series_mohr_selected->append(selectedModel->normal_traction(selectedModel->fracture_angle),
+    // append max points
+    max_graph->clear();
+    max_mohr->clear();
+    max_mohr->append(selectedModel->normal_traction(selectedModel->fracture_angle),
                                  selectedModel->tangential_traction(selectedModel->fracture_angle));
+    max_graph->append(selectedModel->fracture_angle,
+                                 selectedModel->normal_traction(selectedModel->fracture_angle));
+
+    // sector limits
+
+    sector_limits->clear();
+    sector_limits_mohr->clear();
+    for(Model::Sector &s : selectedModel->fan) {
+        double angle = s.angle1;
+        double normal_traction = selectedModel->normal_traction(angle);
+        double tangential_traction = selectedModel->tangential_traction(angle);
+        sector_limits->append(angle, normal_traction);
+        sector_limits_mohr->append(normal_traction, tangential_traction);
+    }
+    sector_limits->append(0, selectedModel->normal_traction(0));
+    sector_limits_mohr->append(selectedModel->normal_traction(0), selectedModel->tangential_traction(0));
+
 
     // VTK
 /*
