@@ -7,14 +7,22 @@
 class Model
 {
 public:
-    Model();
     bool isBoundary;
+    double max_angle;   // assigned in InitializeFan()
+    double max_normal_trac, fracture_angle; // assigned in EvaluateViaBrent()
+    double min_normal_trac, max_tangential_trac, min_tangential_trac;
+    unsigned iterations;     // how many iterations the evaluation took; assigned in EvaluateViaBrent()
 
     void AddSector(double ux, double uy, double uz,
                    double vx, double vy, double vz,
                    double sx, double sy, double txy);
 
-    void Evaluate();    // calculate the result
+    void InitializeFan();
+    void EvaluateViaBrent();
+
+    void evaluate_tractions(const double angle_fwd, double &t_normal, double &t_tangential) const;
+    double normal_traction(const double angle_fwd) const;
+    double tangential_traction(const double angle_fwd) const;
 
     struct Sector
     {
@@ -28,31 +36,6 @@ public:
     };
 
     std::vector<Sector> fan;
-
-    struct Result
-    {
-        Eigen::Vector2d traction[2];    // traction of the "left" and "right" side of the fracture plane
-        double angle_fwd, angle_bwd;
-        double phi[2];
-        double theta[2];
-        double t0_normal, t0_tangential;
-        double t1_normal, t1_tangential;
-        double trac_normal, trac_tangential;
-        Eigen::Vector2d tn, tn_perp;
-    };
-
-    static const unsigned number_of_ponts = 200;
-    Result results[number_of_ponts];
-
-
-    Eigen::Vector2d dir;
-    unsigned evaluation_time;
-    double max_angle;
-    unsigned fwd_sector, bwd_sector;
-    unsigned idx_max_sector;
-    double max_normal_traction;
-    double approx_radius;
-
 };
 
 #endif // MODEL_H

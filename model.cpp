@@ -1,12 +1,13 @@
 #include "model.h"
+#include "boost/math/tools/minima.hpp"
+#include <iostream>
+#include <iomanip>
 #include <cmath>
 #include <cfloat>
+#include <stdexcept>
 #include <Eigen/Geometry>
+using namespace std;
 
-Model::Model()
-{
-
-}
 
 void Model::AddSector(double ux, double uy, double uz,
                double vx, double vy, double vz,
@@ -25,7 +26,8 @@ void Model::AddSector(double ux, double uy, double uz,
     fan.push_back(s);
 }
 
-void Model::Evaluate()
+
+void Model::InitializeFan()
 {
     auto get_angle = [](Eigen::Vector2d u, Eigen::Vector2d v)
     {
@@ -43,103 +45,117 @@ void Model::Evaluate()
         s.angle_span = get_angle(s.u,s.v);
         end_angle += s.angle_span;
         s.angle1 = end_angle;
-
-
-
         s.t0 = s.stress * s.u_p;
         s.t1 = s.stress * s.v_p;
     }
-
-    // evaluate the function for different angles and record the maximum
-    max_normal_traction = -DBL_MAX;
-    max_angle = end_angle;
-
-    dir = Eigen::Vector2d::Zero();
-
-    // discretize (CCW)
-    for (std::size_t i=0; i<number_of_ponts; i++)
-    {
-        Result &ssr = results[i];
-        ssr.tn = Eigen::Vector2d::Zero();
-        ssr.traction[0] = ssr.traction[1] = Eigen::Vector2d::Zero();
-
-        double angle_fwd = (double)i*end_angle/number_of_ponts;
-        ssr.angle_fwd = angle_fwd;
-
-        double angle_bwd = angle_fwd+end_angle/2;
-        if (angle_bwd >= end_angle) angle_bwd -= end_angle;
-        ssr.angle_bwd = angle_bwd;
-
-        // integrate traction
-        int sector = (isBoundary || angle_fwd < angle_bwd) ? 0 : 1;
-
-        for (std::size_t f=0; f < fan.size(); f++)
-        {
-            Sector &fp = fan[f];
-
-            if (angle_fwd >= fp.angle0 && angle_fwd < fp.angle1)
-            {
-                ssr.phi[0] = angle_fwd - fp.angle0;
-                ssr.theta[0] = fp.angle1 - angle_fwd;
-
-
-                double ratio = ssr.phi[0]/fp.angle_span;
-                ssr.tn = fp.u_normalized*(1-ratio) + fp.v_normalized*ratio;
-                ssr.tn.normalize();
-
-                ssr.tn_perp = fp.u_p*(1-ratio) + fp.v_p*ratio;
-                ssr.tn_perp.normalize();
-                Eigen::Vector2d tmult = fp.stress * ssr.tn_perp;
-
-                ssr.traction[sector] += tmult - fp.t0;
-                sector = 1-sector;
-                ssr.traction[sector] += fp.t1 - tmult;
-            }
-            else if (!isBoundary && angle_bwd >= fp.angle0 && angle_bwd < fp.angle1)
-            {
-                ssr.phi[1] = angle_bwd - fp.angle0;
-                ssr.theta[1] = fp.angle1 - angle_bwd;
-
-                double ratio = ssr.phi[1]/fp.angle_span;
-//                Eigen::Vector2d tn = fp.u_normalized*(1-ratio) + fp.v_normalized*ratio;
-
-                Eigen::Vector2d tn_perp = fp.u_p*(1-ratio) + fp.v_p*ratio;
-                tn_perp.normalize();
-
-                Eigen::Vector2d tmult = fp.stress * tn_perp;
-
-                ssr.traction[sector] += tmult - fp.t0;
-                sector = 1-sector;
-                ssr.traction[sector] += fp.t1 - tmult;
-            }
-            else
-            {
-                ssr.traction[sector] += fp.t1 - fp.t0;
-            }
-        }   // nFans
-
-
-        ssr.t0_tangential = ssr.traction[0].dot(ssr.tn);
-        ssr.t1_tangential = ssr.traction[1].dot(ssr.tn);
-        ssr.t0_normal = ssr.tn_perp.dot(ssr.traction[0]);
-        ssr.t1_normal = ssr.tn_perp.dot(ssr.traction[1]);
-
-        ssr.trac_normal = ssr.t0_normal-ssr.t1_normal;
-        ssr.trac_tangential = ssr.t0_tangential-ssr.t1_tangential;
-
-        if(!isBoundary)
-        {
-            ssr.trac_normal/=2;
-            ssr.trac_tangential/=2;
-        }
-
-        if(max_normal_traction < ssr.trac_normal) {
-            max_normal_traction = ssr.trac_normal;
-            idx_max_sector = i;
-            dir = ssr.tn;
-        }
-    } // num_disc
-
+    max_angle = isBoundary ? end_angle : M_PI;
+    max_angle -= 1e-10;
 }
 
+void Model::evaluate_tractions(const double angle_fwd, double &trac_normal, double &trac_tangential) const
+{
+    if(angle_fwd > max_angle) throw std::range_error("angle is out of range");
+    Eigen::Vector2d traction[2];
+    traction[0] = traction[1] = Eigen::Vector2d::Zero();
+    Eigen::Vector2d tn, tn_p;
+
+    double angle_bwd = angle_fwd+M_PI;
+    if (angle_bwd >= 2*M_PI) angle_bwd -= 2*M_PI;
+
+    // integrate traction
+    int sector = (isBoundary || angle_fwd < angle_bwd) ? 0 : 1;
+
+    for (std::size_t f=0; f < fan.size(); f++)
+    {
+        const Sector &fp = fan[f];
+        if (angle_fwd >= fp.angle0 && angle_fwd < fp.angle1)
+        {
+            double ratio = (angle_fwd - fp.angle0)/fp.angle_span;
+            tn = (fp.u_normalized*(1-ratio) + fp.v_normalized*ratio).normalized();
+            tn_p = (fp.u_p*(1-ratio) + fp.v_p*ratio).normalized(); // perpendicular to tn
+            Eigen::Vector2d tmult = fp.stress * tn_p;
+            traction[sector] += tmult - fp.t0;
+            sector = 1-sector;
+            traction[sector] += fp.t1 - tmult;
+        }
+        else if (!isBoundary && angle_bwd >= fp.angle0 && angle_bwd < fp.angle1)
+        {
+            double ratio = (angle_bwd - fp.angle0)/fp.angle_span;
+            Eigen::Vector2d tn_p_bwd = (fp.u_p*(1-ratio) + fp.v_p*ratio).normalized();
+            Eigen::Vector2d tmult = fp.stress * tn_p_bwd;
+            traction[sector] += tmult - fp.t0;
+            sector = 1-sector;
+            traction[sector] += fp.t1 - tmult;
+        }
+        else
+        {
+            traction[sector] += fp.t1 - fp.t0;
+        }
+    }
+
+    double t0_tangential = traction[0].dot(tn);
+    double t1_tangential = traction[1].dot(tn);
+    double t0_normal = tn_p.dot(traction[0]);
+    double t1_normal = tn_p.dot(traction[1]);
+
+    trac_normal = t0_normal-t1_normal;
+    trac_tangential = t0_tangential-t1_tangential;
+
+    if(!isBoundary)
+    {
+        trac_normal/=2;
+        trac_tangential/=2;
+    }
+}
+
+
+double Model::normal_traction(const double angle_fwd) const
+{
+    double trac_normal, trac_tangential;
+    evaluate_tractions(angle_fwd, trac_normal, trac_tangential);
+    return trac_normal;
+}
+
+double Model::tangential_traction(const double angle_fwd) const
+{
+    double trac_normal, trac_tangential;
+    evaluate_tractions(angle_fwd, trac_normal, trac_tangential);
+    return trac_tangential;
+}
+
+void Model::EvaluateViaBrent()
+{
+    int bits = std::numeric_limits<float>::digits;
+
+    boost::uintmax_t max_iter = 100;
+    auto r = boost::math::tools::brent_find_minima(
+                [this](double x){return -this->normal_traction(x);},
+    0.0, max_angle, bits, max_iter);
+
+    max_normal_trac = -r.second; // sign inverted since we need the maximum
+    fracture_angle = r.first;
+    iterations = max_iter;
+/*
+    // min normal
+    max_iter = 100;
+    r = boost::math::tools::brent_find_minima(
+                [this](double x){return this->normal_traction(x);},
+    0.0, max_angle, bits, max_iter);
+    min_normal_trac = r.second;
+
+    // max tangential
+    max_iter = 100;
+    r = boost::math::tools::brent_find_minima(
+                [this](double x){return -this->tangential_traction(x);},
+    0.0, max_angle, bits, max_iter);
+    max_tangential_trac = -r.second;
+
+    // min tangential
+    max_iter = 100;
+    r = boost::math::tools::brent_find_minima(
+                [this](double x){return this->tangential_traction(x);},
+    0.0, max_angle, bits, max_iter);
+    min_tangential_trac = r.second;
+    */
+}
 

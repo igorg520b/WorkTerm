@@ -49,4 +49,5 @@ target_link_libraries(wt PRIVATE Qt5::Widgets Qt5::Charts Qt5::Core)
 #target_include_directories(wt PUBLIC /home/s2/Projects-libraries/vtk/Common/Core/)
 
 #target_include_directories(wt PUBLIC "C:/Users/s/Projects/eigen-3.3.7")
-target_include_directories(wt PUBLIC "/home/s2/Projects-libraries/eigen")
+target_include_directories(wt PUBLIC "/Users/desiree/Desktop/MITACS/eigen-3.3.7")
+target_include_directories(wt PUBLIC "/usr/local/Cellar/boost/1.73.0/include")
