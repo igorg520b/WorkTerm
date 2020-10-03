@@ -46,9 +46,7 @@ void Model::InitializeFan()
         s.t0 = s.stress * s.u_p;
         s.t1 = s.stress * s.v_p;
     }
-//    max_angle = isBoundary ? end_angle : M_PI;
     max_angle = end_angle;
-//    max_angle -= 1e-10;
 }
 
 void Model::evaluate_tractions(double angle_fwd, double &trac_normal, double &trac_tangential) const
@@ -108,7 +106,6 @@ void Model::evaluate_tractions(double angle_fwd, double &trac_normal, double &tr
     }
 }
 
-
 double Model::normal_traction(const double angle_fwd) const
 {
     double trac_normal, trac_tangential;
@@ -129,7 +126,7 @@ void Model::EvaluateViaBrent()
 
     boost::uintmax_t max_iter = 100;
     auto r = boost::math::tools::brent_find_minima(
-                [this](double x){return -this->normal_traction(x);},
+                [=](double x){return -normal_traction(x);},
     0.0, isBoundary ? max_angle : M_PI, bits, max_iter);
 
     max_normal_trac = -r.second; // sign inverted since we need the maximum
