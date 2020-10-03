@@ -9,9 +9,7 @@
 using namespace std;
 
 
-void Model::AddSector(double ux, double uy, double uz,
-               double vx, double vy, double vz,
-               double sx, double sy, double txy)
+void Model::AddSector(double ux, double uy, double vx, double vy, double sx, double sy, double txy)
 {
     Sector s;
     s.u << ux, uy;

@@ -13,9 +13,7 @@ public:
     double min_normal_trac, max_tangential_trac, min_tangential_trac;
     unsigned iterations;     // how many iterations the evaluation took; assigned in EvaluateViaBrent()
 
-    void AddSector(double ux, double uy, double uz,
-                   double vx, double vy, double vz,
-                   double sx, double sy, double txy);
+    void AddSector(double ux, double uy, double vx, double vy, double sx, double sy, double txy);
 
     void InitializeFan();
     void EvaluateViaBrent();
